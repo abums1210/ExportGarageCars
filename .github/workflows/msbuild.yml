@@ -48,41 +48,18 @@ jobs:
         echo ::group::Build SDK GTA III static lib
         msbuild %SLN_FILE% /property:Configuration=Release /property:Platform="Mixed Platforms" /target:plugin_iii /m /verbosity:minimal
         echo ::groupEnd::
-        
-        echo ::group::Build SDK GTA VC static lib
-        msbuild %SLN_FILE% /property:Configuration=Release /property:Platform="Mixed Platforms" /target:plugin_vc /m /verbosity:minimal
-        echo ::groupEnd::
-
-        echo ::group::Build SDK GTA SA static lib
-        msbuild %SLN_FILE% /property:Configuration=Release /property:Platform="Mixed Platforms" /target:plugin_sa /m /verbosity:minimal
-        echo ::groupEnd::
 
     - name: Set Environment Variables & Create Mock Folders
       shell: powershell
       run: |
         # Create mock script folders so the post-build copy commands don't crash
         New-Item -ItemType Directory -Force -Path "${{ github.workspace }}\mock_gta3\scripts"
-        New-Item -ItemType Directory -Force -Path "${{ github.workspace }}\mock_gtavc\scripts"
-        New-Item -ItemType Directory -Force -Path "${{ github.workspace }}\mock_gtasa\scripts"
         
         # Inject paths into GITHUB_ENV for global MSBuild reference
         echo "PLUGIN_SDK_DIR=${{ github.workspace }}\plugin-sdk" | Out-File -FilePath $env:GITHUB_ENV -Append
         echo "GTA_III_DIR=${{ github.workspace }}\mock_gta3" | Out-File -FilePath $env:GITHUB_ENV -Append
-        echo "GTA_VC_DIR=${{ github.workspace }}\mock_gtavc" | Out-File -FilePath $env:GITHUB_ENV -Append
-        echo "GTA_SA_DIR=${{ github.workspace }}\mock_gtasa" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-    - name: Build (ExportGarageCars San Andreas)
-      continue-on-error: true
-      run: |
-        msbuild ExportGarageCars.sln /p:Configuration="Release" /p:Platform="GTA-SA" /m /verbosity:minimal
-
-    - name: Build (ExportGarageCars Vice City)
-      continue-on-error: true
-      run: |
-        msbuild ExportGarageCars.sln /p:Configuration="Release" /p:Platform="GTA-VC" /m /verbosity:minimal
 
     - name: Build (ExportGarageCars GTA III)
-      continue-on-error: true
       run: |
         msbuild ExportGarageCars.sln /p:Configuration="Release" /p:Platform="GTA3" /m /verbosity:minimal
 
@@ -91,7 +68,7 @@ jobs:
       shell: powershell
       run: |
         New-Item -ItemType Directory -Force -Path "output/asi"
-        Get-ChildItem -Path "${{ github.workspace }}\mock_gta3\scripts", "${{ github.workspace }}\mock_gtavc\scripts", "${{ github.workspace }}\mock_gtasa\scripts" -Filter *.asi -ErrorAction SilentlyContinue | ForEach-Object {
+        Get-ChildItem -Path "${{ github.workspace }}\mock_gta3\scripts" -Filter *.asi -ErrorAction SilentlyContinue | ForEach-Object {
             Copy-Item -Path $_.FullName -Destination "output/asi\" -Force
         }
         if (Test-Path "output/asi") {
